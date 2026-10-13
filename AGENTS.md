@@ -8,6 +8,7 @@
 - 表示は Components V2（`IS_COMPONENTS_V2`）で組む。1 メッセージのコンポーネントは 40 個以内に収める。
 - 日付の判定はすべて JST。`Date` を直接使わず `src/time.ts` のヘルパーを使う。
 - 日付の入力は「対象月 + カンマ区切りのテキスト」だけで、ボタン UI は作らない。
+- カレンダーは日曜始まり（設計書の月曜始まりから変更）。曜日のインデックスは日曜が 0。
 
 ## 制約
 
@@ -21,3 +22,5 @@
 - `compatibilityDate` はローカルの workerd が対応する日付より新しくすると `pnpm dev` が起動しない。
 - 純粋関数（`parse.ts`、`render.ts`、`time.ts`）のテストは `test/` に置き、Node 上の vitest で動かす（`vitest.config.ts` は Cloudflare プラグインを読み込まない）。
 - コマンド定義を変えたら `pnpm register-commands` で再登録する。
+- カレンダーの曜日と人数入りのマスはアプリ絵文字。`scripts/emoji.ts` が画像を生成して登録し、ID を `src/emoji.json` に書き出す。ID はアプリごとに異なる。絵文字がない場合は標準の絵文字と文字にフォールバックする。
+- 絵文字のデザインを変えたら `pnpm emoji --preview <dir>` で画像を確かめ、`pnpm emoji --force` で作り直す。

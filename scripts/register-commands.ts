@@ -41,7 +41,14 @@ const commands: RESTPutAPIApplicationCommandsJSONBody = [
 				type: ApplicationCommandOptionType.Subcommand,
 				name: "free",
 				description: "全員の空き状況をカレンダーで表示する",
-				options: [month],
+				options: [
+					month,
+					{
+						type: ApplicationCommandOptionType.User,
+						name: "user",
+						description: "指定するとその人の予定を表示する",
+					},
+				],
 			},
 			{
 				type: ApplicationCommandOptionType.Subcommand,

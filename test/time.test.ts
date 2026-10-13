@@ -18,9 +18,9 @@ describe("日付計算", () => {
 		expect(addMonths({ year: 2026, month: 1 }, -1)).toEqual({ year: 2025, month: 12 });
 	});
 
-	it("曜日は月曜が 0", () => {
-		expect(weekdayIndex({ year: 2026, month: 11, day: 2 })).toBe(0);
-		expect(weekdayIndex({ year: 2026, month: 11, day: 1 })).toBe(6);
+	it("曜日は日曜が 0", () => {
+		expect(weekdayIndex({ year: 2026, month: 11, day: 1 })).toBe(0);
+		expect(weekdayIndex({ year: 2026, month: 11, day: 7 })).toBe(6);
 	});
 
 	it("JST の月初 0 時を UNIX 秒で返す", () => {

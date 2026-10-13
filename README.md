@@ -7,7 +7,7 @@
 | コマンド | 動作 |
 | --- | --- |
 | `/skm busy [month]` | 忙しい日を入力するモーダルを開く。送信するとその月の登録を置き換える |
-| `/skm free [month]` | 全員の空き状況をカレンダーで表示する |
+| `/skm free [month] [user]` | 全員の空き状況をカレンダーで表示する。`user` を指定するとその人の予定を表示する |
 | `/skm mine [month]` | 自分の登録内容を確認する |
 | `/skm leave` | 集計対象から外れる。登録データも削除する |
 | `/skm setup channel:<channel> [hour:<0-23>]` | リマインドの投稿先と時刻（日本時間、省略時 8 時）を設定する |
@@ -19,12 +19,14 @@
 - 日付の判定はすべて日本時間で行います。
 - 登録直後は `/skm free` に反映されるまで数十秒かかることがあります。
 
-カレンダーの色は次の意味です。
+カレンダーの色は次の意味です。黄と赤のマスには、その日に忙しい人の数が入ります（99 人まで）。
 
 - 🟩 全員空き
 - 🟨 忙しい人が参加者の半数未満
 - 🟥 忙しい人が参加者の半数以上
 - ⬛ 過去の日
+
+`user` を指定した場合は、その人が忙しい日が 🟥、空いている日が 🟩 になります。
 
 ## 導入
 
@@ -50,21 +52,27 @@
    | `DISCORD_APPLICATION_ID` | General Information の Application ID |
    | `DISCORD_BOT_TOKEN` | Bot の Token |
 
-4. デプロイします。`.env` の値は Worker の Secrets として反映されます。
+4. カレンダー用のアプリ絵文字（曜日と、人数入りのマス）を登録します。画像を生成してアプリに登録し、ID を `src/emoji.json` に書き出します。初回は画像生成用のフォント（Noto Sans JP）をダウンロードします。登録しなくても動きますが、その場合は曜日が文字、マスが数字なしで表示されます。
+
+   ```sh
+   pnpm emoji
+   ```
+
+5. デプロイします。`.env` の値は Worker の Secrets として反映されます。
 
    ```sh
    pnpm run deploy
    ```
 
-5. Developer Portal の General Information で、Interactions Endpoint URL にデプロイ先の URL（`https://sukima-bot.<subdomain>.workers.dev/`）を設定します。
+6. Developer Portal の General Information で、Interactions Endpoint URL にデプロイ先の URL（`https://sukima-bot.<subdomain>.workers.dev/`）を設定します。
 
-6. コマンドを登録します。`DISCORD_GUILD_ID` を指定するとそのサーバーにだけ即座に反映されます。省略するとグローバルに登録され、反映まで時間がかかることがあります。
+7. コマンドを登録します。`DISCORD_GUILD_ID` を指定するとそのサーバーにだけ即座に反映されます。省略するとグローバルに登録され、反映まで時間がかかることがあります。
 
    ```sh
    DISCORD_GUILD_ID=<サーバー ID> pnpm register-commands
    ```
 
-7. Developer Portal の Installation でスコープ `bot` と `applications.commands`、権限 View Channels と Send Messages を選び、生成された URL から Bot をサーバーに招待します。
+8. Developer Portal の Installation でスコープ `bot` と `applications.commands`、権限 View Channels と Send Messages を選び、生成された URL から Bot をサーバーに招待します。
 
 ## 開発
 

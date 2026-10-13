@@ -8,10 +8,12 @@
 		"deploy": "cf deploy --secrets-file .env",
 		"typecheck": "cf workers types && tsc && tsc -p scripts",
 		"test": "vitest run",
-		"register-commands": "node --env-file=.env scripts/register-commands.ts"
+		"register-commands": "node --env-file=.env scripts/register-commands.ts",
+		"emoji": "node --env-file-if-exists=.env scripts/emoji.ts"
 	},
 	"devDependencies": {
 		"@cloudflare/vite-plugin": "beta",
+		"@resvg/resvg-js": "^2.6.2",
 		"@types/node": "^26.6.5",
 		"cf": "^1.0.0-beta.12",
 		"typescript": "^7.0.2",

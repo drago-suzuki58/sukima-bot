@@ -1,7 +1,7 @@
 // Workers の実行環境は UTC なので、UTC+9 をずらした Date の UTC 系メソッドで JST を扱う。
 const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
 
-export const WEEKDAYS = ["月", "火", "水", "木", "金", "土", "日"] as const;
+export const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"] as const;
 
 /** month は 1-12 */
 export interface YearMonth {
@@ -27,9 +27,9 @@ export function daysInMonth(ym: YearMonth): number {
 	return new Date(Date.UTC(ym.year, ym.month, 0)).getUTCDate();
 }
 
-/** 月曜を 0 とする曜日 */
+/** 日曜を 0 とする曜日 */
 export function weekdayIndex(date: JstDate): number {
-	return (new Date(Date.UTC(date.year, date.month - 1, date.day)).getUTCDay() + 6) % 7;
+	return new Date(Date.UTC(date.year, date.month - 1, date.day)).getUTCDay();
 }
 
 export function addDays(date: JstDate, n: number): JstDate {

@@ -74,6 +74,12 @@ export async function putMember(guild: string, user: string, name: string): Prom
 	await env.SKM_KV.put(memberPrefix(guild) + user, "1", { metadata: { name } satisfies MemberMetadata });
 }
 
+/** 参加者なら登録時の表示名、参加者でなければ null */
+export async function getMemberName(guild: string, user: string): Promise<string | null> {
+	const { value, metadata } = await env.SKM_KV.getWithMetadata<MemberMetadata>(memberPrefix(guild) + user);
+	return value === null ? null : (metadata?.name ?? user);
+}
+
 export async function listMembers(guild: string): Promise<Set<string>> {
 	const prefix = memberPrefix(guild);
 	const keys = await listAll<MemberMetadata>(prefix);

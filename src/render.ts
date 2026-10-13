@@ -6,6 +6,8 @@ import {
 	ComponentType,
 	MessageFlags,
 } from "discord-api-types/v10";
+import { busyEmoji, weekdayEmoji } from "./emoji.ts";
+import { formatDays } from "./parse.ts";
 import {
 	addDays,
 	compareDates,
@@ -32,7 +34,8 @@ export const CELL = {
 	outside: "▫️",
 } as const;
 
-const LEGEND = `-# ${CELL.free} 全員空き　${CELL.few} 半数未満が忙しい　${CELL.many} 半数以上が忙しい　${CELL.past} 過去`;
+const LEGEND = `-# ${CELL.free} 全員空き　${CELL.few} 半数未満が忙しい　${CELL.many} 半数以上が忙しい　${CELL.past} 過去　数字は忙しい人数`;
+const USER_LEGEND = `-# ${CELL.free} 空き　${CELL.many} 忙しい　${CELL.past} 過去`;
 const REGISTER_HINT = "`/skm busy` で忙しい日を登録できます";
 
 function message(components: APIMessageTopLevelComponent[], ephemeral: boolean): V2Message {
@@ -68,32 +71,36 @@ export function countBusy(entries: Map<string, number[]>, members: Set<string>):
 	return counts;
 }
 
+/** 忙しい人数で色分けし、アプリ絵文字があれば人数入りのマスにする */
 export function cellEmoji(busy: number, participants: number, past: boolean): string {
 	if (past) return CELL.past;
 	if (busy === 0) return CELL.free;
-	return busy * 2 < participants ? CELL.few : CELL.many;
+	const level = busy * 2 < participants ? "few" : "many";
+	return busyEmoji(level, busy) ?? CELL[level];
 }
 
-/** 月曜始まりで 1 行 7 マス。行頭にその週の月曜の日付を置く */
+/** 曜日ヘッダー。アプリ絵文字が揃っていなければ文字で表示する */
+function weekdayHeader(): string {
+	const emojis = WEEKDAYS.map((_, i) => weekdayEmoji(i));
+	return emojis.every((emoji) => emoji !== undefined) ? emojis.join("") : WEEKDAYS.join(" ");
+}
+
+/** 日曜始まりで 1 行 7 マス。行頭にその週の日曜の日付を置く。マスの中身は cell で決める */
 export function renderCalendar(
 	ym: YearMonth,
-	participants: number,
-	counts: Map<number, number>,
 	today: JstDate,
+	cell: (day: number, past: boolean) => string,
 ): string {
 	const first: JstDate = { ...ym, day: 1 };
 	const last: JstDate = { ...ym, day: daysInMonth(ym) };
-	const lines = [`\`     \` ${WEEKDAYS.join(" ")}`];
+	const lines = [`\`     \` ${weekdayHeader()}`];
 
-	for (let monday = addDays(first, -weekdayIndex(first)); compareDates(monday, last) <= 0; monday = addDays(monday, 7)) {
-		const label = `${String(monday.month).padStart(2, "0")}/${String(monday.day).padStart(2, "0")}`;
+	for (let sunday = addDays(first, -weekdayIndex(first)); compareDates(sunday, last) <= 0; sunday = addDays(sunday, 7)) {
+		const label = `${String(sunday.month).padStart(2, "0")}/${String(sunday.day).padStart(2, "0")}`;
 		let cells = "";
 		for (let i = 0; i < 7; i++) {
-			const date = addDays(monday, i);
-			cells +=
-				date.month === ym.month
-					? cellEmoji(counts.get(date.day) ?? 0, participants, compareDates(date, today) < 0)
-					: CELL.outside;
+			const date = addDays(sunday, i);
+			cells += date.month === ym.month ? cell(date.day, compareDates(date, today) < 0) : CELL.outside;
 		}
 		lines.push(`\`${label}\` ${cells}`);
 	}
@@ -128,10 +135,32 @@ export function renderFree(
 		[
 			container([
 				text(`## ${formatMonth(ym)}の空き状況\n参加者 ${participants} 人`),
-				text(renderCalendar(ym, participants, counts, today)),
+				text(renderCalendar(ym, today, (day, past) => cellEmoji(counts.get(day) ?? 0, participants, past))),
 				separator,
 				text(summary),
 				text(LEGEND),
+			]),
+		],
+		false,
+	);
+}
+
+function escapeMarkdown(value: string): string {
+	return value.replace(/([\\*_~`|>#[\]])/g, "\\$1");
+}
+
+/** 1 人分の予定。忙しい日を赤、空いている日を緑で表示する */
+export function renderUserFree(ym: YearMonth, name: string, days: number[], today: JstDate): V2Message {
+	const busy = new Set(days);
+	const summary = days.length > 0 ? `**忙しい日（${days.length} 日）**\n${formatDays(days)}` : "この月の登録はありません";
+	return message(
+		[
+			container([
+				text(`## ${escapeMarkdown(name)} さんの予定（${formatMonth(ym)}）`),
+				text(renderCalendar(ym, today, (day, past) => (past ? CELL.past : busy.has(day) ? CELL.many : CELL.free))),
+				separator,
+				text(summary),
+				text(USER_LEGEND),
 			]),
 		],
 		false,
