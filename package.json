@@ -5,13 +5,21 @@
 	"scripts": {
 		"dev": "cf dev",
 		"build": "cf build",
-		"deploy": "cf deploy",
-		"typecheck": "cf workers types && tsc"
+		"deploy": "cf deploy --secrets-file .env",
+		"typecheck": "cf workers types && tsc && tsc -p scripts",
+		"test": "vitest run",
+		"register-commands": "node --env-file=.env scripts/register-commands.ts"
 	},
 	"devDependencies": {
 		"@cloudflare/vite-plugin": "beta",
+		"@types/node": "^26.6.5",
 		"cf": "^1.0.0-beta.12",
 		"typescript": "^7.0.2",
-		"vite": "^8.3.0"
+		"vite": "^8.3.0",
+		"vitest": "^5.0.4"
+	},
+	"dependencies": {
+		"discord-api-types": "^0.38.56",
+		"hono": "^4.13.13"
 	}
 }
